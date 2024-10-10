@@ -4,9 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
+
+	"github.com/Masterminds/squirrel"
 )
 
 var (
+	sq = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+
 	ErrResourceExisted = errors.New("resource existed")
 )
 
@@ -20,8 +25,15 @@ func NewRepositoryImpl(db *sql.DB) *RepositoryImpl {
 	}
 }
 
-func (repo RepositoryImpl) getById(id uint64) (*Category, error) {
-	return &Category{}, nil
+func (repo RepositoryImpl) searchById(id uint64) (*Category, error) {
+	category := &Category{ID: id}
+	querySelect := `select name from categories where id = $1`
+
+	if err := repo.DB.QueryRow(querySelect, category.ID).Scan(&category.Name); err != nil {
+		return nil, err
+	}
+
+	return category, nil
 }
 
 func (repo RepositoryImpl) create(category *Category) error {
@@ -36,18 +48,74 @@ func (repo RepositoryImpl) create(category *Category) error {
 		return err
 	}
 
+	// first, check if name existed
 	querySelect := `select id from categories where name = $1`
-	_, err = tx.Query(querySelect, category.Name)
+	rows, err := tx.Query(querySelect, category.Name)
 
 	// sql.ErrNoRows is expected
 	if err == nil {
-		return ErrResourceExisted
+		for rows.Next() {
+			return ErrResourceExisted
+		}
 	} else if err != sql.ErrNoRows {
 		return err
 	}
 
+	// then execute insert
 	queryInsert := `insert into categories(name) values($1) returning id`
-	err = repo.DB.QueryRow(queryInsert, category.Name).Scan(&category.ID)
+	if err = repo.DB.QueryRow(queryInsert, category.Name).Scan(&category.ID); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo RepositoryImpl) update(category *Category) error {
+	tx, err := repo.DB.BeginTx(context.TODO(), &sql.TxOptions{})
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// first, check id must existed and name must not existed
+	var count int64
+	querySelectById := `select count(id) from categories where id = $1 or (id != $1 and name = $2)`
+	if err = tx.QueryRow(querySelectById, category.ID, category.Name).Scan(&count); err != nil {
+		return err
+	}
+	if count == 0 {
+		return sql.ErrNoRows
+	} else if count > 1 {
+		return ErrResourceExisted
+	}
+
+	log.Printf("count = %d", count)
+
+	// then execute update
+	queryUpdate := `update categories
+		set name = $1
+		where id = $2`
+
+	result, err := tx.Exec(queryUpdate, category.Name, category.ID)
+	if err != nil {
+		log.Println("aaa")
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	count, err = result.RowsAffected()
+	log.Printf("rowAffected: %d", count)
+	if count < 1 {
+		err = sql.ErrNoRows
+	}
 	if err != nil {
 		return err
 	}
@@ -55,12 +123,46 @@ func (repo RepositoryImpl) create(category *Category) error {
 	return nil
 }
 
-func (repo RepositoryImpl) update(category *Category) (*Category, error) {
+func (repo RepositoryImpl) search(params *CategorySearchParams) (*CategorySearchResponse, error) {
+	log.Printf("category search params %+v", params)
+	qb := sq.Select("id, name").From("categories")
 
-	return &Category{}, nil
-}
+	if params.Page >= 0 {
+		qb = qb.Limit(uint64(params.PageSize)).
+			Offset(uint64(params.Page * params.PageSize))
+	}
 
-func (repo RepositoryImpl) query(params *CategoryQueryParams) (*CategoryQueryResponse, error) {
-	// return nil, errors.New("fake error")
-	return &CategoryQueryResponse{}, nil
+	if params.Keyword != "" {
+		qb = qb.Where(squirrel.Like{"name": "%" + params.Keyword + "%"})
+	}
+
+	query, args, err := qb.ToSql()
+	if err != nil {
+		log.Println("category search error building query")
+		return nil, err
+	}
+	log.Printf("category search query: %s", query)
+	log.Printf("category search args: %v", args)
+
+	rows, err := repo.DB.Query(query, args...)
+	if err != nil {
+		log.Println("category search error executing query")
+		return nil, err
+	}
+
+	response := &CategorySearchResponse{}
+	response.Items = make([]*Category, 0, 10)
+
+	for rows.Next() {
+		category := &Category{}
+		err = rows.Scan(&category.ID, &category.Name)
+		if err != nil {
+			log.Println("category search error scanning rows")
+			return nil, err
+		}
+
+		response.Items = append(response.Items, category)
+	}
+
+	return response, nil
 }

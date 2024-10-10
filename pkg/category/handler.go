@@ -21,20 +21,45 @@ func NewCategoryHandler(db *sql.DB) *CategoryHandler {
 
 func (handler CategoryHandler) RegisterRoute(engine *gin.Engine, prefix string) {
 	engine.GET(prefix+"/categories/:id", handler.handleGetByID)
-	engine.GET(prefix+"/categories", handler.handleQuery)
+	engine.GET(prefix+"/categories", handler.handleSearch)
 	engine.POST(prefix+"/categories", handler.handleCreate)
+	engine.PATCH(prefix+"/categories", handler.handleUpdate)
 
+}
+
+func (handler CategoryHandler) handleUpdate(context *gin.Context) {
+	var category Category
+	if err := context.BindJSON(&category); err != nil {
+		log.Printf("category handleUpdate error: %v", err)
+		context.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+		return
+	}
+
+	if err := handler.Repo.update(&category); err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+			return
+		} else if err == ErrResourceExisted {
+			context.JSON(http.StatusBadRequest, gin.H{"error": "category existed"})
+			return
+		}
+		log.Printf("category handleUpdate error: %v", err)
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	context.JSON(http.StatusOK, category)
 }
 
 func (handler CategoryHandler) handleCreate(context *gin.Context) {
 	var category Category
 	if err := context.BindJSON(&category); err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		context.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
 		return
 	}
 
 	if err := handler.Repo.create(&category); err != nil {
-		log.Printf("error: %v", err)
+		log.Printf("category handleCreate error: %v", err)
 		if err == ErrResourceExisted {
 			context.JSON(http.StatusBadRequest, gin.H{"error": "category existed"})
 			return
@@ -43,7 +68,7 @@ func (handler CategoryHandler) handleCreate(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusAccepted, category)
+	context.JSON(http.StatusCreated, category)
 }
 
 func (handler CategoryHandler) handleGetByID(context *gin.Context) {
@@ -55,26 +80,30 @@ func (handler CategoryHandler) handleGetByID(context *gin.Context) {
 		return
 	}
 
-	category, err := handler.Repo.getById(id)
+	category, err := handler.Repo.searchById(id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+			return
+		}
 		log.Printf("category handleGetById error %v", err)
-		context.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 
 	context.JSON(http.StatusOK, category)
 }
 
-func (handler CategoryHandler) handleQuery(context *gin.Context) {
-	var params CategoryQueryParams
+func (handler CategoryHandler) handleSearch(context *gin.Context) {
+	var params CategorySearchParams
 	params.Keyword = context.Query("keyword")
 	params.Page, _ = strconv.Atoi(context.DefaultQuery("page", "1"))
 	params.PageSize, _ = strconv.Atoi(context.DefaultQuery("pageSize", "10"))
 
-	result, err := handler.Repo.query(&params)
+	result, err := handler.Repo.search(&params)
 
 	if err != nil {
-		log.Printf("category handleQuery error %v", err)
+		log.Printf("category handleSearch error %v", err)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}

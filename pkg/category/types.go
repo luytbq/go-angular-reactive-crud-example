@@ -1,27 +1,27 @@
 package category
 
 type Category struct {
-	ID   uint64
-	Name string
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
 	// Description string
 }
 
-type CategoryQueryParams struct {
+type CategorySearchParams struct {
 	Keyword  string
 	Page     int
 	PageSize int
 }
 
-type CategoryQueryResponse struct {
-	CurrentPage int
-	PageSize    int
-	TotalPage   int
-	Items       []Category
+type CategorySearchResponse struct {
+	CurrentPage int         `json:"currentPage"`
+	PageSize    int         `json:"pageSize"`
+	TotalPage   int         `json:"totalPage"`
+	Items       []*Category `json:"items"`
 }
 
 type Repository interface {
-	getById(id uint64) (*Category, error)
+	searchById(id uint64) (*Category, error)
 	create(category *Category) error
-	update(category *Category) (*Category, error)
-	query(params *CategoryQueryParams) (*CategoryQueryResponse, error)
+	update(category *Category) error
+	search(params *CategorySearchParams) (*CategorySearchResponse, error)
 }
