@@ -22,7 +22,28 @@ func NewCategoryHandler(db *sql.DB) *CategoryHandler {
 func (handler CategoryHandler) RegisterRoute(engine *gin.Engine, prefix string) {
 	engine.GET(prefix+"/categories/:id", handler.handleGetByID)
 	engine.GET(prefix+"/categories", handler.handleQuery)
+	engine.POST(prefix+"/categories", handler.handleCreate)
 
+}
+
+func (handler CategoryHandler) handleCreate(context *gin.Context) {
+	var category Category
+	if err := context.BindJSON(&category); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+
+	if err := handler.Repo.create(&category); err != nil {
+		log.Printf("error: %v", err)
+		if err == ErrResourceExisted {
+			context.JSON(http.StatusBadRequest, gin.H{"error": "category existed"})
+			return
+		}
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	context.JSON(http.StatusAccepted, category)
 }
 
 func (handler CategoryHandler) handleGetByID(context *gin.Context) {
