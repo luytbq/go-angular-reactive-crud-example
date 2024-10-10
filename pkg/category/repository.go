@@ -123,6 +123,7 @@ func (repo RepositoryImpl) update(category *Category) error {
 	return nil
 }
 
+// TODO: complete work
 func (repo RepositoryImpl) search(params *CategorySearchParams) (*CategorySearchResponse, error) {
 	log.Printf("category search params %+v", params)
 	qb := sq.Select("id, name").From("categories")
