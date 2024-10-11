@@ -7,12 +7,11 @@ import (
 	"log"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/luytbq/go-angular-reactive-crud-example/pkg/common"
 )
 
 var (
 	sq = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-
-	ErrResourceExisted = errors.New("resource existed")
 )
 
 type RepositoryImpl struct {
@@ -55,7 +54,7 @@ func (repo RepositoryImpl) create(category *Category) error {
 	// sql.ErrNoRows is expected
 	if err == nil {
 		for rows.Next() {
-			return ErrResourceExisted
+			return common.ErrResourceExisted
 		}
 	} else if err != sql.ErrNoRows {
 		return err
@@ -91,7 +90,7 @@ func (repo RepositoryImpl) update(category *Category) error {
 	if count == 0 {
 		return sql.ErrNoRows
 	} else if count > 1 {
-		return ErrResourceExisted
+		return common.ErrResourceExisted
 	}
 
 	log.Printf("count = %d", count)
@@ -123,14 +122,34 @@ func (repo RepositoryImpl) update(category *Category) error {
 	return nil
 }
 
-// TODO: complete work
+func (repo RepositoryImpl) delete(id uint64) error {
+	query := `delete from categories where id = $1`
+
+	result, err := repo.DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	count, err := result.RowsAffected()
+
+	if err != nil || count > 1 {
+		return errors.New("some thing went wrong")
+	}
+
+	if count == 0 {
+		return common.ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (repo RepositoryImpl) search(params *CategorySearchParams) (*CategorySearchResponse, error) {
 	log.Printf("category search params %+v", params)
 	qb := sq.Select("id, name").From("categories")
 
-	if params.Page >= 0 {
+	if params.PageSize > 0 {
 		qb = qb.Limit(uint64(params.PageSize)).
-			Offset(uint64(params.Page * params.PageSize))
+			Offset(uint64((params.Page - 1) * params.PageSize))
 	}
 
 	if params.Keyword != "" {
@@ -151,7 +170,7 @@ func (repo RepositoryImpl) search(params *CategorySearchParams) (*CategorySearch
 		return nil, err
 	}
 
-	response := &CategorySearchResponse{}
+	response := &CategorySearchResponse{TotalPages: 1, CurrentPage: 1, PageSize: -1}
 	response.Items = make([]*Category, 0, 10)
 
 	for rows.Next() {
@@ -165,5 +184,38 @@ func (repo RepositoryImpl) search(params *CategorySearchParams) (*CategorySearch
 		response.Items = append(response.Items, category)
 	}
 
+	if params.PageSize > 1 {
+		repo.addSearchTotal(response, params)
+	}
+
 	return response, nil
+}
+
+func (repo *RepositoryImpl) addSearchTotal(response *CategorySearchResponse, params *CategorySearchParams) error {
+	qb := sq.Select("count(1)").From("categories")
+
+	if params.Keyword != "" {
+		qb = qb.Where(squirrel.Like{"name": "%" + params.Keyword + "%"})
+	}
+
+	query, args, err := qb.ToSql()
+	if err != nil {
+		log.Println("category search error building query")
+		return err
+	}
+	log.Printf("category search query: %s", query)
+	log.Printf("category search args: %v", args)
+
+	var total int64 = 0
+	err = repo.DB.QueryRow(query, args...).Scan(&total)
+	if err != nil {
+		log.Println("category search error count total")
+		return err
+	}
+
+	response.TotalPages = int(total/int64(params.PageSize) + 1)
+	response.CurrentPage = params.Page
+	response.PageSize = params.PageSize
+
+	return nil
 }

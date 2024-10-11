@@ -3,13 +3,13 @@ module github.com/luytbq/go-angular-reactive-crud-example
 go 1.22.1
 
 require (
+	github.com/Masterminds/squirrel v1.5.4
 	github.com/gin-gonic/gin v1.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 )
 
 require (
-	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
