@@ -121,12 +121,21 @@ func (handler CategoryHandler) handleGetByID(context *gin.Context) {
 func (handler CategoryHandler) handleSearch(context *gin.Context) {
 	var params CategorySearchParams
 	params.Keyword = context.Query("keyword")
-	params.Page, _ = strconv.Atoi(context.DefaultQuery("page", "1"))
-	params.PageSize, _ = strconv.Atoi(context.DefaultQuery("pageSize", "10"))
 
+	pageSize, err := strconv.Atoi(context.DefaultQuery("pageSize", "-1"))
+	if err != nil {
+		pageSize = 10
+	}
 	if params.PageSize < 1 {
 		params.PageSize = -1
 	}
+	params.PageSize = pageSize
+
+	page, err := strconv.Atoi(context.DefaultQuery("page", "1"))
+	if err != nil {
+		page = 10
+	}
+	params.Page = page
 
 	result, err := handler.Repo.search(&params)
 
