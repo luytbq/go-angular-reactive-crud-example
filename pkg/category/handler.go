@@ -2,6 +2,7 @@ package category
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -59,6 +60,11 @@ func (handler CategoryHandler) handleUpdate(context *gin.Context) {
 		return
 	}
 
+	if err := validateCategory(&category); err != nil {
+		context.JSON(http.StatusBadRequest, common.ResponseError(err))
+		return
+	}
+
 	if err := handler.Repo.update(&category); err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, common.ResponseResourceNotFound)
@@ -79,6 +85,11 @@ func (handler CategoryHandler) handleCreate(context *gin.Context) {
 	var category Category
 	if err := context.BindJSON(&category); err != nil {
 		context.JSON(http.StatusBadRequest, common.ResponseBadRequest)
+		return
+	}
+
+	if err := validateCategory(&category); err != nil {
+		context.JSON(http.StatusBadRequest, common.ResponseError(err))
 		return
 	}
 
@@ -150,4 +161,11 @@ func (handler CategoryHandler) handleSearch(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, result)
+}
+
+func validateCategory(category *Category) error {
+	if category.Name == "" {
+		return errors.New("invalid name")
+	}
+	return nil
 }

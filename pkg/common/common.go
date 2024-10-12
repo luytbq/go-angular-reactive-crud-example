@@ -12,3 +12,7 @@ var (
 	ErrResourceExisted  = errors.New("resource existed")
 	ErrResourceNotFound = errors.New("resource not found")
 )
+
+func ResponseError(err error) map[string]any {
+	return map[string]any{"error": err.Error()}
+}

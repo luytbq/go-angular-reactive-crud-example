@@ -2,13 +2,24 @@ package api
 
 import (
 	"database/sql"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/luytbq/go-angular-reactive-crud-example/pkg/category"
 )
 
 func (server *APIServer) Run() error {
 	engine := gin.Default()
+
+	engine.Use(cors.New(cors.Config{
+        AllowOrigins:     []string{"http://localhost:4200"},
+        AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+        AllowHeaders:     []string{"Content-Type", "Authorization"},
+        ExposeHeaders:    []string{"Content-Length"},
+        AllowCredentials: true,
+        MaxAge: 12 * time.Hour,
+    }))
 
 	categoryHandler := category.NewCategoryHandler(server.DB)
 
