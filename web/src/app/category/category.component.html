@@ -1,0 +1,39 @@
+<div class="container p-3">
+  <div class="mb-3">
+    <input
+      class="me-3 min-w-[200px] rounded border px-3 py-2"
+      type="text"
+      [(ngModel)]="searchKeyword"
+    />
+    <button class="rounded border px-3 py-2" (click)="submitSearch()">
+      Search
+    </button>
+  </div>
+  <div class="mb-3">
+    <ul>
+      @for (item of service.items$(); track item.id) {
+        <li class="mb-3">
+          <span class="me-4 inline-block w-[200px] text-ellipsis">{{
+            item.name
+          }}</span>
+          <button class="me-4 rounded border px-2 py-1" (click)="delete(item.id)">Delete</button>
+          <button class="me-4 rounded border px-2 py-1">Edit</button>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="mb-3">
+    <div class="mb-3">
+      <label for="" class="me-3"></label>
+      <input
+        class="me-3 min-w-[200px] rounded border px-3 py-2"
+        type="text"
+        [(ngModel)]="addCategory.name"
+      />
+    </div>
+    <button class="rounded border px-3 py-2" (click)="submitAdd()">
+      Add Category
+    </button>
+  </div>
+</div>
