@@ -1,4 +1,11 @@
-import { Component, inject, Injectable } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  inject,
+  Injectable,
+  ViewChild,
+} from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialog,
@@ -63,16 +70,15 @@ export class ConfirmService {
   selector: 'app-confirm',
   imports: [MatDialogModule],
   standalone: true,
-  template: ` <div class="p-3">
-    <h2 class="mb-3 text-center text-xl font-bold">
+  template: ` <div>
+    <h2 class="p-3 text-center text-xl font-bold">
       {{ data.title || 'Confirm action' }}
     </h2>
-    @if (data.prompt) {
-      <div class="mb-3">{{ data.prompt }}</div>
-    }
-    <div class="flex flex-row-reverse gap-3">
+    <hr/>
+    <div class="mb-3 p-3" #dialog_body></div>
+    <div class="flex flex-row-reverse gap-3 p-3">
       <button
-        class="bg-green-500 rounded border p-2 min-w-16"
+        class="min-w-16 rounded border bg-green-500 p-2"
         mat-button
         mat-dialog-close
         (click)="closeDialog(true)"
@@ -80,7 +86,7 @@ export class ConfirmService {
         {{ data.yes || 'Yes' }}
       </button>
       <button
-        class="bg-gray-400 rounded border p-2 min-w-16"
+        class="min-w-16 rounded border bg-gray-400 p-2"
         mat-button
         mat-dialog-close
         cdkFocusInitial
@@ -91,14 +97,21 @@ export class ConfirmService {
     </div>
   </div>`,
 })
-export class ConfirmComponent {
+export class ConfirmComponent implements AfterViewInit {
   dialogRef = inject(MatDialogRef<ConfirmComponent>);
   data = inject(MAT_DIALOG_DATA);
 
-  confirm(c: boolean) {}
+  @ViewChild('dialog_body') dialog_body: ElementRef | undefined;
 
-  constructor() {
-    console.log('confirmComponent constructor', this.data);
+  constructor() {}
+
+  ngAfterViewInit(): void {
+    console.log(this.dialog_body);
+    if (this.data.prompt) {
+      this.dialog_body
+        ? (this.dialog_body.nativeElement.innerHTML = this.data.prompt)
+        : '';
+    }
   }
 
   closeDialog(value: boolean) {

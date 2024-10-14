@@ -29,20 +29,7 @@ export class CategoryComponent {
     name: new FormControl(''),
   });
 
-  delete$ = new Subject<number>();
-
   constructor() {
-    this.delete$.subscribe(number => {
-      this.confirm.title('Delete category?')
-        .prompt('This can\' be undo')
-        .yes('Confirm')
-        .no('Cancel')
-        .open().subscribe(result => {
-          if (result) {
-            this.service.delete$.next(number);
-          }
-        })
-    })
   }
 
   search() {
@@ -54,7 +41,15 @@ export class CategoryComponent {
     this.addCategory.name = '';
   }
 
-  delete(id: number) {
-    this.delete$.next(id);
+  delete(id: number, name: string) {
+    this.confirm.title('Delete category?')
+    .prompt(`Deleting <b>${name}</b><br/>This can\' be undone!`)
+    .yes('Confirm')
+    .no('Cancel')
+    .open().subscribe(result => {
+      if (result) {
+        this.service.delete$.next(id);
+      }
+    })
   }
 }

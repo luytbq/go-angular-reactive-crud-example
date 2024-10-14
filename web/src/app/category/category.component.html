@@ -10,17 +10,23 @@
     </button>
   </div>
   <div class="mb-3">
-    <ul>
-      @for (item of service.items$(); track item.id) {
-        <li class="mb-3">
-          <span class="me-4 inline-block w-[200px] text-ellipsis">{{
-            item.name
-          }}</span>
-          <button class="me-4 rounded border px-2 py-1" (click)="delete(item.id)">Delete</button>
-          <button class="me-4 rounded border px-2 py-1">Edit</button>
-        </li>
-      }
-    </ul>
+    <table>
+      <thead>
+        <th>Name</th>
+        <th colspan="2"></th>
+      </thead>
+      <tbody>
+        @for (item of service.items$(); track item.id) {
+          <tr class="mb-3">
+            <td class="p-2 inline-block w-[200px] text-ellipsis">{{
+              item.name
+            }}</td>
+            <td class="p-2"><button class="p-2 rounded border px-2 py-1" (click)="delete(item.id, item.name)">Delete</button></td>
+            <td class="p-2"><button class="p-2 rounded border px-2 py-1">Edit</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
 
   <div class="mb-3">
