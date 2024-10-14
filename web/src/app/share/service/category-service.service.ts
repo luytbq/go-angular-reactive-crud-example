@@ -6,7 +6,7 @@ import {
   Category,
   CategorySearchParams,
   CategorySearchResponse,
-} from '../model/category';
+} from '../../model/category';
 import { Subject } from 'rxjs/internal/Subject';
 import {
   catchError,
@@ -20,7 +20,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { environment } from '../environment/environment';
+import { environment } from '../../environment/environment';
 import { ToastrService } from 'ngx-toastr';
 
 interface State {

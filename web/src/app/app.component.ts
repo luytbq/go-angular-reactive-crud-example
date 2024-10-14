@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CommonModule } from '@angular/common';
+import {MatDialogModule} from '@angular/material/dialog';
 
 @Component({
   selector: 'app-root',
@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
   imports: [
     RouterOutlet,
     FormsModule,
-    // BrowserAnimationsModule,
+    MatDialogModule,
     CommonModule,
   ],
   templateUrl: './app.component.html',
