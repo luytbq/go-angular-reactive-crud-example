@@ -165,7 +165,11 @@ func (handler CategoryHandler) handleSearch(context *gin.Context) {
 
 func validateCategory(category *Category) error {
 	if category.Name == "" {
-		return errors.New("invalid name")
+		return errors.New("invalid category name")
+	}
+
+	if len(category.Name) > 50 {
+		return errors.New("category name must be less than 100 characters")
 	}
 	return nil
 }

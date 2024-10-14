@@ -1,45 +1,52 @@
-<div class="container p-3">
-  <div class="mb-3">
+<div class="max-w-[600px] p-3">
+  <div class="mb-3 flex">
     <input
-      class="me-3 min-w-[200px] rounded border px-3 py-2"
-      type="text"
+      class="w-full block me-3 min-w-[200px] rounded border px-3 py-2"
+      type="text" placeholder="Search for category ..."
       [(ngModel)]="searchKeyword"
     />
-    <button class="rounded border px-3 py-2" (click)="search()">
-      Search
+    <button class="flex-shrink-0 rounded border px-3 py-2" (click)="search()">Search</button>
+  </div>
+  <div class="mb-3 flex flex-row-reverse">
+    <button class="rounded border px-3 py-2" (click)="add()">
+      Add Category
     </button>
   </div>
   <div class="mb-3">
-    <table>
+    <table class="w-full">
+      <colgroup>
+        <col class="align-middle" />
+        <col class="min-w-[200px] align-middle" />
+        <col class="align-middle" />
+      </colgroup>
       <thead>
-        <th>Name</th>
-        <th colspan="2"></th>
+        <tr>
+          <th class="border px-3 py-2">#</th>
+          <th class="border px-3 py-2">Name</th>
+          <th class="border px-3 py-2"></th>
+        </tr>
       </thead>
       <tbody>
-        @for (item of service.items$(); track item.id) {
-          <tr class="mb-3">
-            <td class="p-2 inline-block w-[200px] text-ellipsis">{{
-              item.name
-            }}</td>
-            <td class="p-2"><button class="p-2 rounded border px-2 py-1" (click)="delete(item.id, item.name)">Delete</button></td>
-            <td class="p-2"><button class="p-2 rounded border px-2 py-1">Edit</button></td>
+        @for (item of service.items$(); let index = $index; track item.id) {
+          <tr>
+            <td class="border px-3 py-2">{{ index + 1 }}</td>
+            <td class="border px-3 py-2 break-all">
+              {{ item.name }}
+            </td>
+            <td class="border px-3 py-2">
+              <button
+                class="rounded border px-2 py-1 me-2"
+                (click)="delete(item.id, item.name)"
+              >
+                Delete
+              </button>
+              <button class="rounded border p-2 px-2 py-1" (click)="edit(item)">
+                Edit
+              </button>
+            </td>
           </tr>
         }
       </tbody>
     </table>
-  </div>
-
-  <div class="mb-3">
-    <div class="mb-3">
-      <label for="" class="me-3"></label>
-      <input
-        class="me-3 min-w-[200px] rounded border px-3 py-2"
-        type="text"
-        [(ngModel)]="addCategory.name"
-      />
-    </div>
-    <button class="rounded border px-3 py-2" (click)="add()">
-      Add Category
-    </button>
   </div>
 </div>

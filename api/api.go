@@ -14,7 +14,7 @@ func (server *APIServer) Run() error {
 
 	engine.Use(cors.New(cors.Config{
         AllowOrigins:     []string{"http://localhost:4200"},
-        AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+        AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
         AllowHeaders:     []string{"Content-Type", "Authorization"},
         ExposeHeaders:    []string{"Content-Length"},
         AllowCredentials: true,

@@ -85,7 +85,7 @@ export class CategoryServiceService {
 
   private categoryEdited$ = this.edit$.pipe(
     exhaustMap((category) =>
-      this.http.post(environment.API_URL + '/categories', category).pipe(
+      this.http.patch(environment.API_URL + '/categories', category).pipe(
         tap((response) => {
           console.log(response);
           this.toastr.success('Saved');
